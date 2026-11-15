@@ -5,6 +5,7 @@ Inputs (data/interim/):
   text_wayback_td_garden.csv           venue-page text (wayback_text.py td_garden)
   text_wayback_wang_theatre.csv        venue-page text (wayback_text.py wang_theatre)
   text_vanyaland_mgm_music_hall.csv    press text (vanyaland_text.py)
+  social_reddit.csv                    optional, pre-event Reddit text (reddit_text.py)
 
 Output:
   data/processed/nonsports_events.csv  one row per venue-date, shared schema first
@@ -31,6 +32,11 @@ from venues import VENUES  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 INTERIM = ROOT / "data" / "interim"
 PROCESSED = ROOT / "data" / "processed"
+
+# Optional (reddit_text.py): pre-event Reddit text, kept apart from description.
+SOCIAL_FILE = INTERIM / "social_reddit.csv"
+SOCIAL_COLUMNS = ["social_text", "has_social_text", "social_n_posts", "social_n_comments", "social_text_length",
+                  "social_subreddits", "social_last_item_utc", "social_reddit_ids"]
 
 TEXT_FILES = {
     "td_garden": INTERIM / "text_wayback_td_garden.csv",
@@ -130,6 +136,18 @@ def main():
     else:
         print("Note: times_do617.csv not found; run do617_times.py for MGM/Wang start times.")
 
+    social = None
+    if SOCIAL_FILE.exists():
+        social = pd.read_csv(SOCIAL_FILE)
+        renamed = social.rename(columns={"n_posts": "social_n_posts", "n_comments": "social_n_comments",
+                                         "subreddits": "social_subreddits", "last_item_utc": "social_last_item_utc",
+                                         "reddit_ids": "social_reddit_ids"})
+        df = df.merge(renamed[["event_id"] + [c for c in SOCIAL_COLUMNS if c in renamed]],
+                      on="event_id", how="left", validate="one_to_one")
+        df["has_social_text"] = df.social_text_length.notna()
+    else:
+        print("Note: social_reddit.csv not found; run reddit_text.py for the social_* columns.")
+
     real = df.text_status.eq("ok") & df.description.notna()
     df["description_source"] = df.description_source.where(real, "template")
     df.loc[~real, "description"] = df[~real].apply(template_description, axis=1)
@@ -165,6 +183,11 @@ def main():
     for col in ["time_start", "venue_lat", "venue_lon", "description", "date_start"]:
         assert df[col].notna().all(), f"missing {col}"
     assert set(df.venue_key) <= set(VENUES)
+    if social is not None:
+        social = social[social.status == "ok"].merge(df[["event_id", "date_start"]], on="event_id")
+        midnight = pd.to_datetime(social.date_start).dt.tz_localize("America/New_York").dt.tz_convert("UTC")
+        social_leak = social[pd.to_datetime(social.last_item_utc) >= midnight]
+        assert social_leak.empty, f"Reddit text dated on/after the event: {social_leak.event_id.tolist()}"
 
     columns = SHARED_SCHEMA + [
         "event_title", "headliner", "supporting_artists", "tour_name", "artist_mbid",
@@ -174,7 +197,7 @@ def main():
         "do617_url",
         "onsale_date", "days_onsale_to_event", "ticket_price_min", "ticket_price_max", "possibly_cancelled",
         "venue_key", "zone_id", "venue_capacity", "indoor_or_outdoor", "text_status",
-    ]
+    ] + SOCIAL_COLUMNS
     out = df[[c for c in columns if c in df]].sort_values(["date_start", "venue_key"])
     PROCESSED.mkdir(parents=True, exist_ok=True)
     out.to_csv(PROCESSED / "nonsports_events.csv", index=False)
@@ -203,6 +226,8 @@ def main():
     print(report.round(2).to_string())
     print("\nCategories:", out.category.value_counts().to_dict())
     print("Start time sources:", out.time_start_source.value_counts().to_dict())
+    if social is not None:
+        print(f"Social text: {out.has_social_text.sum()}/{len(out)} events have pre-event Reddit text")
     print("Checks passed: unique event_id, no text dated on/after its event, no missing required fields.")
     print(f"Wrote {(PROCESSED / 'nonsports_events.csv').relative_to(ROOT)} and coverage_report.csv")
 

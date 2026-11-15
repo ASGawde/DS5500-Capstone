@@ -59,3 +59,19 @@
 | `possibly_cancelled` | Venue page said "canceled" or "postponed" (1 event) |
 | `venue_key`, `zone_id`, `venue_capacity`, `indoor_or_outdoor` | From `events/venues.py` |
 | `do617_url` | Do617 listing used for the start time |
+
+### Social media (Reddit)
+
+Pre-event Reddit discussion: posts and comments from r/boston, r/bostonmusic, r/concerts and the artist's subreddit in the 90 days before the show. This is **not a description**. It is mostly ticket resale, logistics (lines, seats, the T) and hype (sold out, show added), with only about 12% about the music itself. Treat it as a separate feature set, not a fill-in for `description`.
+
+| Column | Meaning |
+|---|---|
+| `social_text` | Reddit text, earliest first, one post or comment per line (capped at 10,000 characters). Empty when there is none. |
+| `has_social_text` | True for the 457 events with Reddit text (216 of the 268 without a real description) |
+| `social_n_posts`, `social_n_comments` | Matched posts and comments |
+| `social_text_length` | Characters of Reddit text (capped at 10,000) |
+| `social_subreddits` | Where the text came from |
+| `social_last_item_utc` | Time of the latest post or comment used. Always before midnight (Boston time) of the event day; `build_events.py` checks this. |
+| `social_reddit_ids` | Reddit IDs of every matched item (`t3_` = post, `t1_` = comment), for rebuilding the text |
+
+To rebuild: `python3 events/reddit_text.py`, then `python3 events/build_events.py`. Without `social_reddit.csv`, the build drops these columns.

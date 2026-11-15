@@ -27,12 +27,14 @@ Output: `data/processed/nonsports_events.csv` and `coverage_report.csv`. Every A
 | `do617_times.py` | Show start times from Do617 listings | `times_do617.csv` |
 | `build_events.py` | Merges everything, fills templates and assumptions, runs the checks | `data/processed/*.csv` |
 | `run_pipeline.sh` | Runs all of the above in order | – |
+| `reddit_text.py` | *Optional, not in `run_pipeline.sh`; run it before `build_events.py`.* Reddit posts and comments about each show from the 90 days **before** it (r/boston, r/bostonmusic, r/concerts, artist subreddit), via the Arctic Shift archive. This is social buzz, kept separate from `description`: `build_events.py` adds it as `social_text` plus `social_*` columns. About 1–2 hours the first time. | `social_reddit.csv` |
 | `ticketmaster_probe.py`, `setlistfm_probe.py` | One-off API tests: Ticketmaster has **no past events**; setlist.fm does | – |
 
 ## Rules the pipeline enforces
 
 - **No leakage:** text must be dated strictly before the event day. `build_events.py` fails if any is not.
 - **Provenance:** every row records `description_source` (`venue_archive`, `vanyaland` or `template`) and `time_start_source`.
+- **Reddit text:** for non-commercial research only. No usernames are stored, and `social_reddit_ids` lets anyone rebuild the text (minus deleted posts) from the archive.
 - **Assumptions are flagged:** `time_assumed` (2% of events) and `duration_assumed` (always; no source publishes end times).
 
 ## Why these sources
