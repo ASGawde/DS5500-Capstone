@@ -28,6 +28,10 @@ ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "data" / "raw" / "setlistfm"
 OUT = ROOT / "data" / "interim" / "events_setlistfm.csv"
 
+# Checked by hand against venue pages (2026-11-16).
+NOT_CONCERTS = {"fenway_park_2025-12-27"}  # Riley Green at the Fenway Bowl (college football)
+HEADLINER_FIXES = {"fenway_park_2025-07-19": "Thomas Rhett"}  # Better in Boots Tour, Teddy Swims a guest
+
 
 def get(endpoint, api_key, **params):
     """GET with ~1 req/sec pacing and backoff on 429 (setlist.fm throttles at 0.6 s)."""
@@ -82,11 +86,14 @@ def group_events(venue_key, setlists):
         if not (WINDOW_START <= date <= WINDOW_END):
             continue
         head = pick_headliner(group)
+        event_id = f"{venue_key}_{date}"
+        if event_id in HEADLINER_FIXES:
+            head = next(s for s in group if s["artist"]["name"] == HEADLINER_FIXES[event_id])
         others = [s["artist"]["name"] for s in group if s is not head]
         tour = head.get("tour", {}).get("name") or next(
             (s["tour"]["name"] for s in group if "tour" in s), None)
         rows.append({
-            "event_id": f"{venue_key}_{date}",
+            "event_id": event_id,
             "event_name": head["artist"]["name"],
             "category": "concert",
             "venue_key": venue_key,
@@ -104,8 +111,11 @@ def group_events(venue_key, setlists):
             "headliner_songs": song_count(head),
             # Anthem singers at Celtics/Bruins games: TD Garden, one artist, no tour, exactly
             # one song. (0 songs just means nobody filled in the setlist for a real show.)
-            "likely_non_concert": (venue_key == "td_garden" and len(group) == 1
-                                   and tour is None and song_count(head) == 1),
+            # Fenway Park: short sets around Red Sox games (2 songs, nobody else on the bill).
+            "likely_non_concert": event_id in NOT_CONCERTS or ((venue_key == "td_garden" and len(group) == 1
+                                    and tour is None and song_count(head) == 1)
+                                   or (venue_key == "fenway_park" and len(group) == 1
+                                       and tour is None and 0 < song_count(head) <= 3)),
             "venue_capacity": venue["venue_capacity"],
             "indoor_or_outdoor": venue["indoor_or_outdoor"],
             "zone_id": venue["zone_id"],

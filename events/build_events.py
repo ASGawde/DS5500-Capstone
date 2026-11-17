@@ -42,13 +42,15 @@ TEXT_FILES = {
     "td_garden": INTERIM / "text_wayback_td_garden.csv",
     "wang_theatre": INTERIM / "text_wayback_wang_theatre.csv",
     "mgm_music_hall": INTERIM / "text_vanyaland_mgm_music_hall.csv",
+    "fenway_park": INTERIM / "text_fenway_park.csv",
 }
 
 # Documented fallback assumptions (no source publishes end times).
-DEFAULT_START = {"td_garden": "19:30", "wang_theatre": "19:30", "mgm_music_hall": "20:00"}
+DEFAULT_START = {"td_garden": "19:30", "wang_theatre": "19:30", "mgm_music_hall": "20:00", "fenway_park": "19:00"}
 DOORS_TO_SHOW_MIN = 60
 DURATION_HOURS = {"concert": 3.0, "comedy": 2.0, "dance_theater": 2.5}
 ARENA_CONCERT_HOURS = 3.5  # TD Garden concerts usually run two openers before the headliner
+STADIUM_CONCERT_HOURS = 4.0  # Fenway Park bills run two or three openers
 
 # Phrases that reveal how popular an event is. Legitimate (public before the show), but flagged
 # so the team can test whether text helps beyond them.
@@ -61,6 +63,9 @@ DEMAND = re.compile(
 COMEDY = re.compile(r"\bcomedian|stand[- ]?up|\bcomedy\b(?! rock)", re.I)
 DANCE_THEATER = re.compile(r"\bballet\b|dance troupe|riverdance|irish dance", re.I)
 LEAD_CHARS = 200
+
+# Cancelled shows that setlist.fm still lists (checked by hand against news and r/boston).
+KNOWN_CANCELLED = {"fenway_park_2025-05-30"}  # Jason Aldean / Brooks & Dunn, stage problem
 
 LISTED_TIME_SOURCES = ["venue_page_schema", "do617_listing", "press_listing"]
 
@@ -162,7 +167,8 @@ def main():
     starts = df.apply(pick_start, axis=1, result_type="expand")
     df["time_start"], df["time_start_source"] = starts[0], starts[1]
     df["time_assumed"] = df.time_start_source.eq("venue_default")
-    df["duration_hours"] = [ARENA_CONCERT_HOURS if (v == "td_garden" and c == "concert") else DURATION_HOURS[c]
+    df["duration_hours"] = [STADIUM_CONCERT_HOURS if v == "fenway_park"
+                            else ARENA_CONCERT_HOURS if (v == "td_garden" and c == "concert") else DURATION_HOURS[c]
                             for v, c in zip(df.venue_key, df.category)]
     df["duration_assumed"] = True
     start_dt = pd.to_datetime(df.date_start + " " + df.time_start)
@@ -173,6 +179,7 @@ def main():
 
     df["demand_language"] = real & df.description.str.contains(DEMAND, na=False)
     df["possibly_cancelled"] = df.page_says_cancelled.fillna(False).astype(bool) if "page_says_cancelled" in df else False
+    df.loc[df.event_id.isin(KNOWN_CANCELLED), "possibly_cancelled"] = True
     df["onsale_date"] = df.get("onsale_date")
     df["days_onsale_to_event"] = (pd.to_datetime(df.date_start) - pd.to_datetime(df.onsale_date)).dt.days
 

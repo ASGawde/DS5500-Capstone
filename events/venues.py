@@ -32,6 +32,17 @@ VENUES = {
         "indoor_or_outdoor": "indoor",
         "zone_id": "fenway",
     },
+    # Stadium concerts only; Red Sox games are in the sports table. Shares the fenway zone
+    # with MGM Music Hall (about 100 m apart). Coordinates: OpenStreetMap (checked 2026-11-16).
+    "fenway_park": {
+        "venue_name": "Fenway Park",
+        "setlistfm_ids": ["3d639d3"],
+        "venue_lat": 42.346461,
+        "venue_lon": -71.0971,
+        "venue_capacity": 37755,
+        "indoor_or_outdoor": "outdoor",
+        "zone_id": "fenway",
+    },
 }
 
 WINDOW_START = "2024-01-01"
