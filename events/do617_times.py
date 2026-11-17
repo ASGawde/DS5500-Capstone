@@ -34,6 +34,7 @@ VENUE_SLUGS = {
     "td_garden": ["td-garden"],
     "wang_theatre": ["wang-theatre", "boch-center-wang-theatre"],
     "mgm_music_hall": ["mgm-music-hall-at-fenway"],
+    "fenway_park": ["fenway-park"],  # page exists but lists no past events (checked 2026-11-16)
 }
 LINK_RE = re.compile(r'href="/events/(20\d{2})/(\d{1,2})/(\d{1,2})/([^"]+)"')
 

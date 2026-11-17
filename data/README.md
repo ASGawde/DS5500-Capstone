@@ -8,9 +8,13 @@
 
 `raw/nearby_venue_dates.json` lists setlist.fm dates for Fenway Park, House of Blues and Big Night Live. Notebook 02 uses it to drop nights with other events at the same stations.
 
+**Fenway Park and MGM Music Hall share the `fenway` zone** (about 100 m apart). 13 of the 34 Fenway concerts fall on a night with an MGM show, so their demand effects overlap.
+
+**Fenway Park coverage was audited** against every archived Red Sox concert page: no in-window show is missing. Two cancellations in the window: Shakira on 2025-05-29 (called off after fans had arrived; not in setlist.fm, so not in the table) and Jason Aldean / Brooks & Dunn on 2025-05-30 (in the table with `possibly_cancelled` = True). Drop or treat both as non-events when modeling.
+
 ## `processed/nonsports_events.csv`
 
-**555 rows**, one per venue and date. TD Garden 159, Wang Theatre 80, MGM Music Hall 316. Window: Jan 2024 – Sep 2026. All times are local Boston time.
+**589 rows**, one per venue and date. TD Garden 159, Wang Theatre 80, MGM Music Hall 316, Fenway Park 34 (stadium concerts only; Red Sox games are in the sports table). Window: Jan 2024 – Sep 2026. All times are local Boston time.
 
 ### Shared schema (same columns as the sports table)
 
@@ -30,8 +34,8 @@
 
 | Column | Meaning |
 |---|---|
-| `description_source` | `venue_archive` (215), `vanyaland` (72) or `template` (268). **Use as a feature in every model configuration.** |
-| `has_real_text` | True for the 287 events with real text |
+| `description_source` | `venue_archive` (248), `vanyaland` (73) or `template` (268). **Use as a feature in every model configuration.** |
+| `has_real_text` | True for the 321 events with real text (all 34 Fenway Park concerts) |
 | `description_timestamp` | When the text was archived or published. Always before `date_start`. |
 | `description_url` | The exact archived page or article |
 | `description_raw` | Venue-page text before ticketing sentences were removed |
@@ -44,7 +48,7 @@
 | Column | Meaning |
 |---|---|
 | `start_datetime`, `end_datetime` | `YYYY-MM-DDTHH:MM` |
-| `time_start_source` | `venue_page_schema` (190), `do617_listing` (355) or `venue_default` (10) |
+| `time_start_source` | `venue_page_schema` (190), `do617_listing` (355) or `venue_default` (44: every Fenway Park concert, since no source lists past stadium show times) |
 | `time_assumed` | True when the start time is a venue default |
 | `duration_hours`, `duration_assumed` | Assumed length: concerts 3 h (3.5 h at TD Garden), comedy 2 h, dance 2.5 h |
 | `onsale_date`, `days_onsale_to_event` | From TD Garden pages (about 92% of TD Garden events) |
@@ -56,7 +60,7 @@
 | `event_title` | Title on the venue page or article (e.g. "KISS 108 Jingle Ball") |
 | `headliner`, `supporting_artists`, `tour_name`, `artist_mbid` | From setlist.fm (`artist_mbid` = MusicBrainz ID) |
 | `ticket_price_min`, `ticket_price_max` | Where listed (mostly Wang) |
-| `possibly_cancelled` | Venue page said "canceled" or "postponed" (1 event) |
+| `possibly_cancelled` | Venue page said "canceled" or "postponed", or the show is known to have been cancelled (2 events) |
 | `venue_key`, `zone_id`, `venue_capacity`, `indoor_or_outdoor` | From `events/venues.py` |
 | `do617_url` | Do617 listing used for the start time |
 
@@ -67,7 +71,7 @@ Pre-event Reddit discussion: posts and comments from r/boston, r/bostonmusic, r/
 | Column | Meaning |
 |---|---|
 | `social_text` | Reddit text, earliest first, one post or comment per line (capped at 10,000 characters). Empty when there is none. |
-| `has_social_text` | True for the 457 events with Reddit text (216 of the 268 without a real description) |
+| `has_social_text` | True for the 489 events with Reddit text (216 of the 268 without a real description) |
 | `social_n_posts`, `social_n_comments` | Matched posts and comments |
 | `social_text_length` | Characters of Reddit text (capped at 10,000) |
 | `social_subreddits` | Where the text came from |

@@ -9,9 +9,10 @@ cd "$(dirname "$0")/.."
 
 PY="python3 -W ignore"
 
-echo "== 1/6 Event list (setlist.fm)";               $PY events/setlistfm_collect.py
-echo "== 2/6 TD Garden text (Wayback)";              $PY events/wayback_text.py td_garden
-echo "== 3/6 Wang Theatre text (Wayback)";           $PY events/wayback_text.py wang_theatre
-echo "== 4/6 MGM Music Hall text (Vanyaland)";       $PY events/vanyaland_text.py
-echo "== 5/6 Start times (Do617)";                   $PY events/do617_times.py
-echo "== 6/6 Final table";                           $PY events/build_events.py
+echo "== 1/7 Event list (setlist.fm)";               $PY events/setlistfm_collect.py
+echo "== 2/7 TD Garden text (Wayback)";              $PY events/wayback_text.py td_garden
+echo "== 3/7 Wang Theatre text (Wayback)";           $PY events/wayback_text.py wang_theatre
+echo "== 4/7 MGM Music Hall text (Vanyaland)";       $PY events/vanyaland_text.py
+echo "== 5/7 Fenway Park text (Red Sox pages)";     $PY events/fenway_text.py
+echo "== 6/7 Start times (Do617)";                   $PY events/do617_times.py
+echo "== 7/7 Final table";                           $PY events/build_events.py

@@ -1,6 +1,6 @@
 # events/: non-sports event pipeline
 
-Builds the table of concerts and shows at **TD Garden, Wang Theatre and MGM Music Hall at Fenway** (Jan 2024 – Sep 2026). Each event gets a **description that was public before the show**, where one exists.
+Builds the table of concerts and shows at **TD Garden, Wang Theatre, MGM Music Hall at Fenway and Fenway Park** (stadium concerts) (Jan 2024 – Sep 2026). Each event gets a **description that was public before the show**, where one exists.
 
 ## Run it
 
@@ -24,6 +24,7 @@ Output: `data/processed/nonsports_events.csv` and `coverage_report.csv`. Every A
 | `setlistfm_collect.py` | Past concerts from setlist.fm, one row per venue-date (openers merged, anthem singers flagged) | `events_setlistfm.csv` |
 | `wayback_text.py <venue>` | TD Garden / Wang descriptions from Internet Archive snapshots taken **before** each show, plus show time, on-sale date and price | `text_wayback_<venue>.csv` |
 | `vanyaland_text.py` | MGM descriptions from Vanyaland articles published **before** each show | `text_vanyaland_mgm_music_hall.csv` |
+| `fenway_text.py` | Fenway Park concert descriptions from archived Red Sox concert pages (mlb.com/redsox/tickets/concerts), with Vanyaland as a fallback | `text_fenway_park.csv` |
 | `do617_times.py` | Show start times from Do617 listings | `times_do617.csv` |
 | `build_events.py` | Merges everything, fills templates and assumptions, runs the checks | `data/processed/*.csv` |
 | `run_pipeline.sh` | Runs all of the above in order | – |

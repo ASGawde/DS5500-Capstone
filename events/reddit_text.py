@@ -66,7 +66,16 @@ RETRIES = 4             # waits 5, 10, 20, 40 s
 VENUE_WORDS = {
     "td_garden": r"td garden|the garden|north station",
     "wang_theatre": r"wang|boch",
-    "mgm_music_hall": r"mgm|fenway",  # not "music hall": Radio City / Brighton Music Hall
+    # Fans call MGM "Fenway"; "music hall" alone would match Radio City / Brighton Music Hall.
+    "mgm_music_hall": r"mgm|fenway(?! park)",
+    "fenway_park": r"fenway park",
+}
+# Unambiguous names, used to spot a post about the artist's show at another of our venues.
+VENUE_NAMES = {
+    "td_garden": r"td garden",
+    "wang_theatre": r"wang|boch",
+    "mgm_music_hall": r"mgm|music hall at fenway",
+    "fenway_park": r"fenway park",
 }
 # Posts naming one of these (and not the event's venue) are about another show by the artist.
 OTHER_VENUES = (r"radio city|brighton music hall|house of blues|paradise rock|roadrunner|big night live|"
@@ -233,7 +242,7 @@ def collect(ev, subs):
             row["missing"] = "; ".join(filter(None, [row.get("missing"), "artist_sub"]))
 
     # Drop posts about the artist's show at another venue (comments are judged by their thread).
-    elsewhere = "|".join([OTHER_VENUES] + [w for k, w in VENUE_WORDS.items() if k != ev.venue_key])
+    elsewhere = "|".join([OTHER_VENUES] + [w for k, w in VENUE_NAMES.items() if k != ev.venue_key])
     found = [i for i in found if i[1] == "comment" or not mentioned(elsewhere, i[4]) or mentioned(venue, i[4])]
     # Same item can come from several routes; keep real text, earliest first.
     items = sorted({i[2]: i for i in found if len(i[4]) >= MIN_ITEM_CHARS and i[0] < before}.values())
